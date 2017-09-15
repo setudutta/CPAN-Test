@@ -1,0 +1,4 @@
+2. Create and provide a small script which utilizes your module. It must accept the
+directory or directories to be searched on the command line. The script should
+operate in a verbose mode as specified by the “--verbose” flag.
+

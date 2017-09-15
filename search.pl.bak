@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use lib ".";
+use Data::Dumper;
+use SearchFiles;
+
+use Getopt::Long;
+
+my ($directory ,$verbose, $effective_uid, $help);
+my $output;
+my $error;
+
+GetOptions(
+      "d|directory=s"   => \$directory,
+      "v|verbose=s"   => \$verbose,
+      "u|effective_uid=s"   => \$effective_uid,
+      "h|help"           => \$help);
+
+&print_help if $help;
+&print_help unless $directory;
+for(split /\s*,\s*/, $directory) {
+    my $dir = $_;
+    unless(-d $dir) {
+        print "Error: Could not search directory: ". $dir, "\n";
+    }
+    my $obj = new SearchFiles($verbose);
+
+    $SearchFiles::Effective_Uid = $effective_uid if $effective_uid;
+
+    $obj->search($dir);
+
+    print Dumper($obj) if $verbose;
+    
+    $output = $obj->files_changed();
+    
+    print "* No files changed in Directory: $dir\n" unless $output; 
+
+    $error =  $obj->error();
+
+
+}
+
+print "Error(s) if any:  @$error\n";
+
+sub print_help {
+    print "#" x 80;
+    print "\n";
+    print "# $0: Help....\n";
+    print "# Please enter the name of directory to search\n";
+    print "# Use Absolute directory path to search and drop world write permissions\n";
+    print "# For example: $0 -d <Directory_Name>\n";
+    print "# Verbose example: $0 -d <Directory_Name> -verbose 1\n";
+    print "# Search by Effective UID example: $0 -d <Directory_Name> -u <EUID> --verbose 1\n";
+    print "#" x 80;
+    print "\n";
+    print "\n";
+    exit;
+}
+
+
+=com
+
+Sample Execution:
+vagrant@vagrant-ubuntu-trusty-64:~/TEST/CPAN$ perl search.pl -d '/home/vagrant, /tmp'
+* No files changed in Directory: /home/vagrant
+* No files changed in Directory: /tmp
+Error(s) if any:
+vagrant@vagrant-ubuntu-trusty-64:~/TEST/CPAN$
+
+Sample Execution with Effective UID not matching file UID
+vagrant@vagrant-ubuntu-trusty-64:~/TEST/CPAN$ perl    search.pl -d "/home/vagrant/TEST/CPAN/, /tmp" -u 1001
+* No files changed in Directory: /home/vagrant/TEST/CPAN/
+* No files changed in Directory: /tmp
+Error(s) if any:
+vagrant@vagrant-ubuntu-trusty-64:~/TEST/CPAN$
+
+Sample Execution with matching file and effective UID
+vagrant@vagrant-ubuntu-trusty-64:~/TEST/CPAN$ perl    search.pl -d "/home/vagrant/TEST/CPAN/, /tmp" -u 1000
+File: /home/vagrant/TEST/CPAN/tp2.txt had write permission
+File: /tmp/tp4.txt had write permission
+File: /tmp/tp3.txt had write permission
+Error(s) if any:
+vagrant@vagrant-ubuntu-trusty-64:~/TEST/CPAN$
+
+=cut
+
+

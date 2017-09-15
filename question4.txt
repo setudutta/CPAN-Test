@@ -1,0 +1,4 @@
+4. Create another script utilizing your module that takes an additional user argument.
+The searching and permission changes should occur with the effective UID of the
+user passed as an argument.
+
